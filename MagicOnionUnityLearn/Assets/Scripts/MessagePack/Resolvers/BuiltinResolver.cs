@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -95,7 +94,6 @@ namespace MessagePack.Internal
             { typeof(Version), VersionFormatter.Instance },
             { typeof(StringBuilder), StringBuilderFormatter.Instance },
             { typeof(BitArray), BitArrayFormatter.Instance },
-            { typeof(Type), TypeFormatter<Type>.Instance },
 
             // special primitive
             { typeof(byte[]), ByteArrayFormatter.Instance },
@@ -104,7 +102,7 @@ namespace MessagePack.Internal
             { typeof(Nil), NilFormatter.Instance },
             { typeof(Nil?), NullableNilFormatter.Instance },
 
-            // optimized primitive array formatter
+            // otpmitized primitive array formatter
             { typeof(Int16[]), Int16ArrayFormatter.Instance },
             { typeof(Int32[]), Int32ArrayFormatter.Instance },
             { typeof(Int64[]), Int64ArrayFormatter.Instance },
@@ -138,12 +136,6 @@ namespace MessagePack.Internal
             { typeof(object[]), new ArrayFormatter<object>() },
             { typeof(List<object>), new ListFormatter<object>() },
 
-            { typeof(Memory<byte>), ByteMemoryFormatter.Instance },
-            { typeof(Memory<byte>?), new StaticNullableFormatter<Memory<byte>>(ByteMemoryFormatter.Instance) },
-            { typeof(ReadOnlyMemory<byte>), ByteReadOnlyMemoryFormatter.Instance },
-            { typeof(ReadOnlyMemory<byte>?), new StaticNullableFormatter<ReadOnlyMemory<byte>>(ByteReadOnlyMemoryFormatter.Instance) },
-            { typeof(ReadOnlySequence<byte>), ByteReadOnlySequenceFormatter.Instance },
-            { typeof(ReadOnlySequence<byte>?), new StaticNullableFormatter<ReadOnlySequence<byte>>(ByteReadOnlySequenceFormatter.Instance) },
             { typeof(ArraySegment<byte>), ByteArraySegmentFormatter.Instance },
             { typeof(ArraySegment<byte>?), new StaticNullableFormatter<ArraySegment<byte>>(ByteArraySegmentFormatter.Instance) },
 
@@ -159,11 +151,6 @@ namespace MessagePack.Internal
             if (FormatterMap.TryGetValue(t, out formatter))
             {
                 return formatter;
-            }
-
-            if (typeof(Type).IsAssignableFrom(t))
-            {
-                return typeof(TypeFormatter<>).MakeGenericType(t).GetField(nameof(TypeFormatter<Type>.Instance)).GetValue(null);
             }
 
             return null;

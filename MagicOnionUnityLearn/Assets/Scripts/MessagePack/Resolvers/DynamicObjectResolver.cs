@@ -69,7 +69,7 @@ namespace MessagePack.Resolvers
             {
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface || ti.IsAbstract)
+                if (ti.IsInterface)
                 {
                     return;
                 }
@@ -129,7 +129,7 @@ namespace MessagePack.Resolvers
             {
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface || ti.IsAbstract)
+                if (ti.IsInterface)
                 {
                     return;
                 }
@@ -205,7 +205,7 @@ namespace MessagePack.Resolvers
 
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface || ti.IsAbstract)
+                if (ti.IsInterface)
                 {
                     return;
                 }
@@ -266,7 +266,7 @@ namespace MessagePack.Resolvers
 
                 TypeInfo ti = typeof(T).GetTypeInfo();
 
-                if (ti.IsInterface || ti.IsAbstract)
+                if (ti.IsInterface)
                 {
                     return;
                 }
@@ -1220,9 +1220,6 @@ namespace MessagePack.Internal
             }
         }
 
-        /// <devremarks>
-        /// Keep this list in sync with ShouldUseFormatterResolverHelper.PrimitiveTypes.
-        /// </devremarks>
         private static bool IsOptimizeTargetType(Type type)
         {
             return type == typeof(Int16)
@@ -1617,14 +1614,8 @@ namespace MessagePack.Internal
                     if (isIntKey)
                     {
                         member.IntKey = key.IntKey.Value;
-                        if (intMembers.TryGetValue(member.IntKey, out EmittableMember conflictingMember))
+                        if (intMembers.ContainsKey(member.IntKey))
                         {
-                            // Quietly skip duplicate if this is an override property.
-                            if ((conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false))
-                            {
-                                continue;
-                            }
-
                             throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
                         }
 
@@ -1633,14 +1624,8 @@ namespace MessagePack.Internal
                     else
                     {
                         member.StringKey = key.StringKey;
-                        if (stringMembers.TryGetValue(member.StringKey, out EmittableMember conflictingMember))
+                        if (stringMembers.ContainsKey(member.StringKey))
                         {
-                            // Quietly skip duplicate if this is an override property.
-                            if ((conflictingMember.PropertyInfo.SetMethod?.IsVirtual ?? false) || (conflictingMember.PropertyInfo.GetMethod?.IsVirtual ?? false))
-                            {
-                                continue;
-                            }
-
                             throw new MessagePackDynamicObjectResolverException("key is duplicated, all members key must be unique." + " type: " + type.FullName + " member:" + item.Name);
                         }
 
@@ -1787,8 +1772,7 @@ namespace MessagePack.Internal
             var constructorParameters = new List<EmittableMemberAndConstructorParameter>();
             if (ctor != null)
             {
-                ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupByKeyDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
-                ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupByMemberNameDictionary = stringMembers.ToLookup(x => x.Value.Name, x => x, StringComparer.OrdinalIgnoreCase);
+                ILookup<string, KeyValuePair<string, EmittableMember>> constructorLookupDictionary = stringMembers.ToLookup(x => x.Key, x => x, StringComparer.OrdinalIgnoreCase);
                 do
                 {
                     constructorParameters.Clear();
@@ -1834,22 +1818,8 @@ namespace MessagePack.Internal
                         }
                         else
                         {
-                            // Lookup by both string key name and member name
-                            IEnumerable<KeyValuePair<string, EmittableMember>> hasKey = constructorLookupByKeyDictionary[item.Name];
-                            IEnumerable<KeyValuePair<string, EmittableMember>> hasKeyByMemberName = constructorLookupByMemberNameDictionary[item.Name];
-
-                            var lenByKey = hasKey.Count();
-                            var lenByMemberName = hasKeyByMemberName.Count();
-
-                            var len = lenByKey;
-
-                            // Prefer to use string key name unless a matching string key is not found but a matching member name is
-                            if (lenByKey == 0 && lenByMemberName != 0)
-                            {
-                                len = lenByMemberName;
-                                hasKey = hasKeyByMemberName;
-                            }
-
+                            IEnumerable<KeyValuePair<string, EmittableMember>> hasKey = constructorLookupDictionary[item.Name];
+                            var len = hasKey.Count();
                             if (len != 0)
                             {
                                 if (len != 1)
@@ -1866,7 +1836,7 @@ namespace MessagePack.Internal
                                 }
 
                                 paramMember = hasKey.First().Value;
-                                if (item.ParameterType.IsAssignableFrom(paramMember.Type) && paramMember.IsReadable)
+                                if (item.ParameterType == paramMember.Type && paramMember.IsReadable)
                                 {
                                     constructorParameters.Add(new EmittableMemberAndConstructorParameter { ConstructorParameter = item, MemberInfo = paramMember });
                                 }

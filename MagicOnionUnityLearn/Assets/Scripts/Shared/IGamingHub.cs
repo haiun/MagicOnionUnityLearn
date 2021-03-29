@@ -9,5 +9,6 @@ namespace GrpcService1.Shared
         Task<Player[]> JoinAsync(string roomName, string userName, Vector3 position, Quaternion rotation);
         Task LeaveAsync();
         Task MoveAsync(Vector3 position, Quaternion rotation);
+        Task SendMessageAsync(string message);
     }
 }

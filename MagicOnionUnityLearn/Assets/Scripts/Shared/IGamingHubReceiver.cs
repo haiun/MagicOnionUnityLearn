@@ -5,5 +5,7 @@
         void OnJoin(Player player);
         void OnLeave(Player player);
         void OnMove(Player player);
+        
+        void OnSendMessage(MessageResponse message);
     }
 }

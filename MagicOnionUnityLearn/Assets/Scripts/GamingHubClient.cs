@@ -24,24 +24,29 @@ public class GamingHubClient : IGamingHubReceiver
         return players[playerName];
     }
 
-    public Task LeaveAsync()
+    public async Task LeaveAsync()
     {
-        return client.LeaveAsync();
+        await client.LeaveAsync();
     }
 
-    public Task MoveAsync(Vector3 position, Quaternion rotation)
+    public async Task MoveAsync(Vector3 position, Quaternion rotation)
     {
-        return client.MoveAsync(position, rotation);
+        await client.MoveAsync(position, rotation);
     }
 
-    public Task DisposeAsync()
+    public async Task SendMessage()
     {
-        return client.DisposeAsync();
+        await client.SendMessageAsync("Message");
     }
 
-    public Task WaitForDisconnect()
+    public async Task DisposeAsync()
     {
-        return client.WaitForDisconnect();
+        await client.DisposeAsync();
+    }
+
+    public async Task WaitForDisconnect()
+    {
+        await client.WaitForDisconnect();
     }
     
     void IGamingHubReceiver.OnJoin(Player player)
@@ -71,5 +76,10 @@ public class GamingHubClient : IGamingHubReceiver
             return;
         
         cube.transform.SetPositionAndRotation(player.Position, player.Rotation);
+    }
+
+    void IGamingHubReceiver.OnSendMessage(MessageResponse messageResponse)
+    {
+        Debug.Log($"{messageResponse.UserName} : {messageResponse.Message}");
     }
 }

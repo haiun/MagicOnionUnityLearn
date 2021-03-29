@@ -4,12 +4,11 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Net.Security;
 using System.Reflection;
 
 namespace MessagePack.Formatters
 {
-    public class PrimitiveObjectFormatter : IMessagePackFormatter<object>
+    public sealed class PrimitiveObjectFormatter : IMessagePackFormatter<object>
     {
         public static readonly IMessagePackFormatter<object> Instance = new PrimitiveObjectFormatter();
 
@@ -33,9 +32,11 @@ namespace MessagePack.Formatters
             { typeof(byte[]), 14 },
         };
 
-        protected PrimitiveObjectFormatter()
+        private PrimitiveObjectFormatter()
         {
         }
+
+#if !UNITY_2018_3_OR_NEWER
 
         public static bool IsSupportedType(Type type, TypeInfo typeInfo, object value)
         {
@@ -66,6 +67,8 @@ namespace MessagePack.Formatters
 
             return false;
         }
+
+#endif
 
         public void Serialize(ref MessagePackWriter writer, object value, MessagePackSerializerOptions options)
         {
@@ -305,15 +308,26 @@ namespace MessagePack.Formatters
                     {
                         var length = reader.ReadMapHeader();
 
+                        IMessagePackFormatter<object> objectFormatter = resolver.GetFormatter<object>();
+                        var hash = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
                         options.Security.DepthStep(ref reader);
                         try
                         {
-                            return this.DeserializeMap(ref reader, length, options);
+                            for (int i = 0; i < length; i++)
+                            {
+                                var key = objectFormatter.Deserialize(ref reader, options);
+
+                                var value = objectFormatter.Deserialize(ref reader, options);
+
+                                hash.Add(key, value);
+                            }
                         }
                         finally
                         {
                             reader.Depth--;
                         }
+
+                        return hash;
                     }
 
                 case MessagePackType.Nil:
@@ -322,20 +336,6 @@ namespace MessagePack.Formatters
                 default:
                     throw new MessagePackSerializationException("Invalid primitive bytes.");
             }
-        }
-
-        protected virtual object DeserializeMap(ref MessagePackReader reader, int length, MessagePackSerializerOptions options)
-        {
-            IMessagePackFormatter<object> objectFormatter = options.Resolver.GetFormatter<object>();
-            var dictionary = new Dictionary<object, object>(length, options.Security.GetEqualityComparer<object>());
-            for (int i = 0; i < length; i++)
-            {
-                var key = objectFormatter.Deserialize(ref reader, options);
-                var value = objectFormatter.Deserialize(ref reader, options);
-                dictionary.Add(key, value);
-            }
-
-            return dictionary;
         }
     }
 }
