@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>9</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.36.0" />
+    <PackageReference Include="MagicOnion" Version="4.1.2" />
+    <PackageReference Include="MagicOnion.Abstractions" Version="4.1.2" />
+    <PackageReference Include="MagicOnion.Hosting" Version="3.0.13" />
+    <PackageReference Include="MagicOnion.MSBuild.Tasks" Version="4.1.2" />
+    <PackageReference Include="MagicOnion.Server" Version="4.1.2" />
+    <PackageReference Include="MagicOnion.Shared" Version="4.1.2" />
+    <PackageReference Include="MessagePack.MSBuild.Tasks" Version="2.1.194">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="MessagePack.UnityShims" Version="2.2.85" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\MagicOnionUnityLearn\Assets\Scripts\Shared\**\*.cs" LinkBase="Shared" />
+    <Compile Update="..\..\MagicOnionUnityLearn\Assets\Scripts\Shared\MessageResponse.cs">
+      <Link>Shared\MessageResponse.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+  <Target Name="GenerateMessagePack" AfterTargets="Compile">
+    <MessagePackGenerator Input=".\Shared.csproj" Output="..\..\MagicOnionUnityLearn\Assets\Scripts\Generated\MessagePack.Generated.cs" />
+  </Target>
+  <Target Name="GenerateMagicOnion" AfterTargets="Compile">
+    <MagicOnionGenerator Input=".\Shared.csproj" Output="..\..\MagicOnionUnityLearn\Assets\Scripts\Generated\MagicOnion.Generated.cs" />
+  </Target>
+  
+</Project>
